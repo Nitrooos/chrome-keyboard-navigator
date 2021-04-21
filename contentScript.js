@@ -32,6 +32,13 @@ const domHighlightModule = (function () {
     return queryClickableAll(domDocument).map(createHighlightFromClickable.bind(null, domDocument));
   }
 
+  function selectHighlight(highlight) {
+    Object.assign(highlight.style, {
+      background: "yellow",
+      opacity: .5
+    });
+  }
+
   function queryClickableAll(domDocument) {
     const clickableSelector = "a, button, input[type=\"button\"], input[type=\"submit\"], input[type=\"reset\"]";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
@@ -54,7 +61,8 @@ const domHighlightModule = (function () {
   }
 
   return {
-    createHighlightsOnPage
+    createHighlightsOnPage,
+    selectHighlight
   }
 })();
 
