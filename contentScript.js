@@ -1,3 +1,32 @@
+const navigatorModule = (function () {
+  function getCentralHighlight(highlights, pageCentralPoint) {
+    const highlightsSortedByDistanceFromCenter = highlights
+      .map(highlight => [highlight, getCentralPoint(highlight)])
+      .map(([highlight, highlightCentralPoint]) => ({
+        highlight,
+        distanceFromCenter: getCartesianDistance(highlightCentralPoint, pageCentralPoint)
+      }))
+      .sort((highlight1, highlight2) => highlight1.distanceFromCenter - highlight2.distanceFromCenter);
+
+    return highlightsSortedByDistanceFromCenter.length > 0
+      ? highlightsSortedByDistanceFromCenter[0].highlight
+      : null;
+  }
+
+  function getCentralPoint(highlight) {
+    const rect = highlight.getBoundingClientRect();
+    return { x: rect.x + .5*rect.width, y: rect.y + .5*rect.height };
+  }
+
+  function getCartesianDistance(point1, point2) {
+    return Math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2);
+  }
+
+  return {
+    getCentralHighlight
+  };
+})();
+
 const domHighlightModule = (function () {
   function createHighlightsOnPage(domDocument) {
     return queryClickableAll(domDocument).map(createHighlightFromClickable.bind(null, domDocument));
