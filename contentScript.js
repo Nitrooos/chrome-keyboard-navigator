@@ -1,15 +1,14 @@
-const highlightsModuleFactory = function (domDocument) {
-  const self = {
-    highlights: queryClickableAll().map(createHighlightFromClickable),
-    highlightsVisible: false
-  };
+const domHighlightModule = (function () {
+  function createHighlightsOnPage(domDocument) {
+    return queryClickableAll(domDocument).map(createHighlightFromClickable.bind(null, domDocument));
+  }
 
-  function queryClickableAll() {
+  function queryClickableAll(domDocument) {
     const clickableSelector = "a, button, input[type=\"button\"], input[type=\"submit\"], input[type=\"reset\"]";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
-  function createHighlightFromClickable(clickableElement) {
+  function createHighlightFromClickable(domDocument, clickableElement) {
     const elementPosition = clickableElement.getBoundingClientRect();
     const highlight = domDocument.createElement("div");
     Object.assign(highlight.style, {
@@ -25,28 +24,40 @@ const highlightsModuleFactory = function (domDocument) {
     return highlight;
   }
 
-  function toggleHighlights() {
-    self.highlightsVisible ? hide(self.highlights) : show(self.highlights);
+  return {
+    createHighlightsOnPage
+  }
+})();
+
+const highlightsModule = (function () {
+  const self = {
+    highlights: [],
+    highlightsVisible: false
+  };
+
+  function toggleHighlights(domWindow) {
+    self.highlightsVisible ? hide() : show(domWindow);
     self.highlightsVisible = !self.highlightsVisible;
   }
 
-  function show(highlights) {
-    highlights.forEach(highlight => domDocument.body.appendChild(highlight));
+  function show(domWindow) {
+    const domDocument = domWindow.document;
+    self.highlights = domHighlightModule.createHighlightsOnPage(domDocument);
+    self.highlights.forEach(highlight => domDocument.body.appendChild(highlight));
   }
 
-  function hide(highlights) {
-    highlights.forEach(highlight => highlight.remove());
+  function hide() {
+    self.highlights.forEach(highlight => highlight.remove());
+    self.highlights = [];
   }
 
   return {
     toggleHighlights
   };
-};
-
-const highlightsModule = highlightsModuleFactory(window.document);
+})();
 
 window.document.addEventListener("keydown", (event) => {
   switch (event.key) {
-    case "f": highlightsModule.toggleHighlights();
+    case "f": highlightsModule.toggleHighlights(window);
   }
 });
