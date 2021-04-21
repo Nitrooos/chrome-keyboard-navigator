@@ -81,6 +81,10 @@ const highlightsModule = (function () {
     const domDocument = domWindow.document;
     self.highlights = domHighlightModule.createHighlightsOnPage(domDocument);
     self.highlights.forEach(highlight => domDocument.body.appendChild(highlight));
+
+    const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
+    const centralHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
+    domHighlightModule.selectHighlight(centralHighlight);
   }
 
   function hide() {
