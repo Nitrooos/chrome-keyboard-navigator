@@ -97,8 +97,12 @@ const highlightsModule = (function () {
   };
 })();
 
-window.document.addEventListener("keydown", (event) => {
-  switch (event.key) {
-    case "f": highlightsModule.toggleHighlights(window);
-  }
-});
+function bindToggleHighlightsOnKeydown(domWindow, key) {
+  domWindow.document.addEventListener("keydown", (event) => {
+    switch (event.key) {
+      case key: highlightsModule.toggleHighlights(window);
+    }
+  });
+}
+
+bindToggleHighlightsOnKeydown(window, "f");
