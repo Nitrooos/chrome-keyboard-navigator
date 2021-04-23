@@ -67,42 +67,57 @@ const domHighlightModule = (function () {
 })();
 
 const highlightsModule = (function () {
+  function show(highlights, domWindow) {
+    const domDocument = domWindow.document;
+    highlights.forEach(highlight => domDocument.body.appendChild(highlight));
+
+    const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
+    const centralHighlight = navigatorModule.getCentralHighlight(highlights, centralPoint);
+    domHighlightModule.selectHighlight(centralHighlight);
+  }
+
+  function hide(highlights) {
+    highlights.forEach(highlight => highlight.remove());
+  }
+
+  return {
+    hide,
+    show
+  };
+})();
+
+const appModule = (function () {
   const self = {
     highlights: [],
     highlightsVisible: false
   };
 
+  function start(domWindow) {
+    addKeydownListener(domWindow, "f", toggleHighlights.bind(null, domWindow));
+  }
+
   function toggleHighlights(domWindow) {
-    self.highlightsVisible ? hide() : show(domWindow);
     self.highlightsVisible = !self.highlightsVisible;
-  }
-
-  function show(domWindow) {
-    const domDocument = domWindow.document;
-    self.highlights = domHighlightModule.createHighlightsOnPage(domDocument);
-    self.highlights.forEach(highlight => domDocument.body.appendChild(highlight));
-
-    const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
-    const centralHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
-    domHighlightModule.selectHighlight(centralHighlight);
-  }
-
-  function hide() {
-    self.highlights.forEach(highlight => highlight.remove());
-    self.highlights = [];
+    if (self.highlightsVisible) {
+      self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
+      highlightsModule.show(self.highlights, domWindow);
+    } else {
+      highlightsModule.hide(self.highlights);
+      self.highlights = [];
+    }
   }
 
   return {
-    toggleHighlights
+    start
   };
 })();
 
-function bindToggleHighlightsOnKeydown(domWindow, key) {
+function addKeydownListener(domWindow, key, handler) {
   domWindow.document.addEventListener("keydown", (event) => {
-    switch (event.key) {
-      case key: highlightsModule.toggleHighlights(window);
+    if (event.key === key) {
+      handler();
     }
   });
 }
 
-bindToggleHighlightsOnKeydown(window, "f");
+appModule.start(window);
