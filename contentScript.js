@@ -214,9 +214,11 @@ const appModule = (function () {
   }
 
   function navigateHighlights(event, direction) {
-    const nearestHighlights = navigatorModule.getNearestHighlights(self.highlights, self.selectedHighlight);
-    navigateHighlightTo(nearestHighlights[direction]);
-    event.preventDefault();
+    if (self.highlightsVisible) {
+      const nearestHighlights = navigatorModule.getNearestHighlights(self.highlights, self.selectedHighlight);
+      navigateHighlightTo(nearestHighlights[direction]);
+      event.preventDefault();
+    }
   }
 
   function navigateHighlightTo(nearestHighlight) {
