@@ -1,20 +1,76 @@
 const navigatorModule = (function () {
   function getCentralHighlight(highlights, pageCentralPoint) {
-    const highlightsSortedByDistanceFromCenter = highlights
-      .map(highlight => [highlight, getCentralPoint(highlight)])
-      .map(([highlight, highlightCentralPoint]) => ({
-        highlight,
-        distanceFromCenter: getCartesianDistance(highlightCentralPoint, pageCentralPoint)
-      }))
-      .sort((highlight1, highlight2) => highlight1.distanceFromCenter - highlight2.distanceFromCenter);
+    const highlightsSortedByDistanceFromCenter = mapHighlightsWithDistanceFromPoint(highlights, pageCentralPoint)
+      .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance)
+      .map(({ highlight }) => highlight);
 
-    return highlightsSortedByDistanceFromCenter.length > 0
-      ? highlightsSortedByDistanceFromCenter[0].highlight
-      : null;
+    return highlightsSortedByDistanceFromCenter[0];
   }
 
-  function getCentralPoint(highlight) {
-    const rect = highlight.getBoundingClientRect();
+  function getNearestHighlights(highlights, selectedHighlight) {
+    const selectedHighlightRect = selectedHighlight.getBoundingClientRect();
+    const selectedHighlightCentralPoint = getCentralPoint(selectedHighlightRect);
+    const highlightsWithPositionData = mapHighlightsWithPositionData(highlights);
+
+    const verticalDistances = highlightsWithPositionData
+      .filter(({ rect }) => rectsVerticallyAligned(selectedHighlightRect, rect))
+      .map(data => ({ ...data, distance: data.centralPoint.y - selectedHighlightCentralPoint.y }))
+      .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
+    const horizontalDistances = highlightsWithPositionData
+      .filter(({ rect }) => rectsHorizontallyAligned(selectedHighlightRect, rect))
+      .map(data => ({ ...data, distance: data.centralPoint.x - selectedHighlightCentralPoint.x }))
+      .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
+
+    const [downNearest, leftNearest, rightNearest, upNearest] = [
+      verticalDistances.filter(({ distance }) => distance > 0),
+      horizontalDistances.filter(({ distance }) => distance < 0),
+      horizontalDistances.filter(({ distance }) => distance > 0),
+      verticalDistances.filter(({ distance }) => distance < 0)
+    ].map(nearestHighlights => nearestHighlights.map(({ highlight }) => highlight));
+
+    return {
+      down: downNearest[0],
+      left: leftNearest[leftNearest.length - 1],
+      right: rightNearest[0],
+      up: upNearest[upNearest.length - 1]
+    };
+  }
+
+  function mapHighlightsWithDistanceFromPoint(highlights, point) {
+    return mapHighlightsWithPositionData(highlights)
+      .map(data => ({
+        ...data,
+        distance: getCartesianDistance(data.centralPoint, point)
+      }));
+  }
+
+  function mapHighlightsWithPositionData(highlights) {
+    return highlights
+      .map(highlight => ({
+        highlight, 
+        rect: highlight.getBoundingClientRect()
+      }))
+      .map(data => ({
+        ...data,
+        centralPoint: getCentralPoint(data.rect)
+      }));
+  }
+
+  function rectsVerticallyAligned(rect1, rect2) {
+    return (
+      rect1.x < rect2.x + rect2.width
+      && rect1.x + rect1.width > rect2.x
+    );
+  }
+
+  function rectsHorizontallyAligned(rect1, rect2) {
+    return (
+      rect1.y < rect2.y + rect2.height
+      && rect1.y + rect1.height > rect2.y
+    );
+  }
+
+  function getCentralPoint(rect) {
     return { x: rect.x + .5*rect.width, y: rect.y + .5*rect.height };
   }
 
@@ -23,7 +79,8 @@ const navigatorModule = (function () {
   }
 
   return {
-    getCentralHighlight
+    getCentralHighlight,
+    getNearestHighlights
   };
 })();
 
@@ -36,6 +93,13 @@ const domHighlightModule = (function () {
     Object.assign(highlight.style, {
       background: "yellow",
       opacity: .5
+    });
+  }
+
+  function unselectHighlight(highlight) {
+    Object.assign(highlight.style, {
+      background: "transparent",
+      opacity: null
     });
   }
 
@@ -62,7 +126,8 @@ const domHighlightModule = (function () {
 
   return {
     createHighlightsOnPage,
-    selectHighlight
+    selectHighlight,
+    unselectHighlight
   }
 })();
 
@@ -70,10 +135,6 @@ const highlightsModule = (function () {
   function show(highlights, domWindow) {
     const domDocument = domWindow.document;
     highlights.forEach(highlight => domDocument.body.appendChild(highlight));
-
-    const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
-    const centralHighlight = navigatorModule.getCentralHighlight(highlights, centralPoint);
-    domHighlightModule.selectHighlight(centralHighlight);
   }
 
   function hide(highlights) {
@@ -89,21 +150,56 @@ const highlightsModule = (function () {
 const appModule = (function () {
   const self = {
     highlights: [],
-    highlightsVisible: false
+    highlightsVisible: false,
+    focusedInputs: new Set(),
+    selectedHighlight: null
   };
 
   function start(domWindow) {
-    addKeydownListener(domWindow, "f", toggleHighlights.bind(null, domWindow));
+    listenKeydownEvents(domWindow);
+  }
+
+  function listenKeydownEvents(domWindow) {
+    domWindow.document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "f": toggleHighlights(domWindow); break;
+        case "ArrowUp": navigateHighlights(event, "up"); break;
+        case "ArrowDown": navigateHighlights(event, "down"); break;
+        case "ArrowLeft": navigateHighlights(event, "left"); break;
+        case "ArrowRight": navigateHighlights(event, "right"); break;
+      }
+    });
   }
 
   function toggleHighlights(domWindow) {
-    self.highlightsVisible = !self.highlightsVisible;
-    if (self.highlightsVisible) {
-      self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
-      highlightsModule.show(self.highlights, domWindow);
-    } else {
-      highlightsModule.hide(self.highlights);
-      self.highlights = [];
+    if (self.focusedInputs.size === 0) {
+      self.highlightsVisible = !self.highlightsVisible;
+      if (self.highlightsVisible) {
+        self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
+        highlightsModule.show(self.highlights, domWindow);
+
+        const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
+        self.selectedHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
+        domHighlightModule.selectHighlight(self.selectedHighlight);
+      } else {
+        highlightsModule.hide(self.highlights);
+        self.highlights = [];
+        self.selectedHighlight = null;
+      }
+    }
+  }
+
+  function navigateHighlights(event, direction) {
+    const nearestHighlights = navigatorModule.getNearestHighlights(self.highlights, self.selectedHighlight);
+    navigateHighlightTo(nearestHighlights[direction]);
+    event.preventDefault();
+  }
+
+  function navigateHighlightTo(nearestHighlight) {
+    if (nearestHighlight) {
+      domHighlightModule.unselectHighlight(self.selectedHighlight)
+      self.selectedHighlight = nearestHighlight;
+      domHighlightModule.selectHighlight(self.selectedHighlight);
     }
   }
 
@@ -111,13 +207,5 @@ const appModule = (function () {
     start
   };
 })();
-
-function addKeydownListener(domWindow, key, handler) {
-  domWindow.document.addEventListener("keydown", (event) => {
-    if (event.key === key) {
-      handler();
-    }
-  });
-}
 
 appModule.start(window);
