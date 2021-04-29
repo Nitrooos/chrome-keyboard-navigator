@@ -110,6 +110,19 @@ const domHighlightModule = (function () {
     });
   }
 
+  function showHighlights(highlights, domWindow) {
+    const domDocument = domWindow.document;
+    highlights
+      .map(highlight => highlight.element)
+      .forEach(highlight => domDocument.body.appendChild(highlight));
+  }
+
+  function hideHighlights(highlights) {
+    highlights
+      .map(highlight => highlight.element)
+      .forEach(highlight => highlight.remove());
+  }
+
   function queryClickableAll(domDocument) {
     const clickableSelector = "a, button, input[type=\"button\"], input[type=\"submit\"], input[type=\"reset\"]";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
@@ -147,29 +160,11 @@ const domHighlightModule = (function () {
 
   return {
     createHighlightsOnPage,
+    hideHighlights,
     selectHighlight,
+    showHighlights,
     unselectHighlight
   }
-})();
-
-const highlightsModule = (function () {
-  function show(highlights, domWindow) {
-    const domDocument = domWindow.document;
-    highlights
-      .map(highlight => highlight.element)
-      .forEach(highlight => domDocument.body.appendChild(highlight));
-  }
-
-  function hide(highlights) {
-    highlights
-      .map(highlight => highlight.element)
-      .forEach(highlight => highlight.remove());
-  }
-
-  return {
-    hide,
-    show
-  };
 })();
 
 const appModule = (function () {
@@ -201,13 +196,13 @@ const appModule = (function () {
       self.highlightsVisible = !self.highlightsVisible;
       if (self.highlightsVisible) {
         self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
-        highlightsModule.show(self.highlights, domWindow);
+        domHighlightModule.showHighlights(self.highlights, domWindow);
 
         const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
         self.selectedHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
         domHighlightModule.selectHighlight(self.selectedHighlight);
       } else {
-        highlightsModule.hide(self.highlights);
+        domHighlightModule.hideHighlights(self.highlights);
         self.highlights = [];
         self.selectedHighlight = null;
       }
