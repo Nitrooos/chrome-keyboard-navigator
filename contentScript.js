@@ -171,7 +171,6 @@ const appModule = (function () {
   const self = {
     highlights: [],
     highlightsVisible: false,
-    focusedInputs: new Set(),
     selectedHighlight: null
   };
 
@@ -187,26 +186,31 @@ const appModule = (function () {
         case "ArrowDown": navigateHighlights(event, "down"); break;
         case "ArrowLeft": navigateHighlights(event, "left"); break;
         case "ArrowRight": navigateHighlights(event, "right"); break;
+        case "Enter": simulateClick(); break;
       }
     });
   }
 
   function toggleHighlights(domWindow) {
-    if (self.focusedInputs.size === 0) {
-      self.highlightsVisible = !self.highlightsVisible;
-      if (self.highlightsVisible) {
-        self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
-        domHighlightModule.showHighlights(self.highlights, domWindow);
+    self.highlightsVisible ? hideHighlights() : showHighlights(domWindow);
+  }
 
-        const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
-        self.selectedHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
-        domHighlightModule.selectHighlight(self.selectedHighlight);
-      } else {
-        domHighlightModule.hideHighlights(self.highlights);
-        self.highlights = [];
-        self.selectedHighlight = null;
-      }
-    }
+  function showHighlights(domWindow) {
+    self.highlights = domHighlightModule.createHighlightsOnPage(domWindow.document);
+    domHighlightModule.showHighlights(self.highlights, domWindow);
+
+    const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
+    self.selectedHighlight = navigatorModule.getCentralHighlight(self.highlights, centralPoint);
+    domHighlightModule.selectHighlight(self.selectedHighlight);
+
+    self.highlightsVisible = true;
+  }
+
+  function hideHighlights() {
+    domHighlightModule.hideHighlights(self.highlights);
+    self.highlights = [];
+    self.selectedHighlight = null;
+    self.highlightsVisible = false;
   }
 
   function navigateHighlights(event, direction) {
@@ -220,6 +224,14 @@ const appModule = (function () {
       domHighlightModule.unselectHighlight(self.selectedHighlight)
       self.selectedHighlight = nearestHighlight;
       domHighlightModule.selectHighlight(self.selectedHighlight);
+    }
+  }
+
+  function simulateClick() {
+    const elementToClick = self.selectedHighlight.clickable;
+    if (elementToClick) {
+      elementToClick.click();
+      hideHighlights();
     }
   }
 
