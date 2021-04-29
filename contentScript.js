@@ -8,23 +8,21 @@ const utilsModule = (function () {
 const navigatorModule = (function () {
   function getCentralHighlight(highlights, pageCentralPoint) {
     const highlightsSortedByDistanceFromCenter = mapHighlightsWithDistanceFromPoint(highlights, pageCentralPoint)
-      .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance)
-      .map(({ highlight }) => highlight);
+      .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
 
     return highlightsSortedByDistanceFromCenter[0];
   }
 
   function getNearestHighlights(highlights, selectedHighlight) {
-    const selectedHighlightRect = selectedHighlight.getBoundingClientRect();
-    const selectedHighlightCentralPoint = getCentralPoint(selectedHighlightRect);
-    const highlightsWithPositionData = mapHighlightsWithPositionData(highlights);
+    const selectedHighlightCentralPoint = getCentralPoint(selectedHighlight.rect);
+    const highlightsWithPositionData = mapHighlightsWithCentralPointData(highlights);
 
     const verticalDistances = highlightsWithPositionData
-      .filter(({ rect }) => rectsVerticallyAligned(selectedHighlightRect, rect))
+      .filter(({ rect }) => rectsVerticallyAligned(selectedHighlight.rect, rect))
       .map(data => ({ ...data, distance: data.centralPoint.y - selectedHighlightCentralPoint.y }))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
     const horizontalDistances = highlightsWithPositionData
-      .filter(({ rect }) => rectsHorizontallyAligned(selectedHighlightRect, rect))
+      .filter(({ rect }) => rectsHorizontallyAligned(selectedHighlight.rect, rect))
       .map(data => ({ ...data, distance: data.centralPoint.x - selectedHighlightCentralPoint.x }))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
 
@@ -33,7 +31,7 @@ const navigatorModule = (function () {
       horizontalDistances.filter(({ distance }) => distance < 0),
       horizontalDistances.filter(({ distance }) => distance > 0),
       verticalDistances.filter(({ distance }) => distance < 0)
-    ].map(nearestHighlights => nearestHighlights.map(({ highlight }) => highlight));
+    ];
 
     const { first, last } = utilsModule;
     return {
@@ -45,22 +43,18 @@ const navigatorModule = (function () {
   }
 
   function mapHighlightsWithDistanceFromPoint(highlights, point) {
-    return mapHighlightsWithPositionData(highlights)
+    return mapHighlightsWithCentralPointData(highlights)
       .map(data => ({
         ...data,
         distance: getCartesianDistance(data.centralPoint, point)
       }));
   }
 
-  function mapHighlightsWithPositionData(highlights) {
+  function mapHighlightsWithCentralPointData(highlights) {
     return highlights
       .map(highlight => ({
-        highlight, 
-        rect: highlight.getBoundingClientRect()
-      }))
-      .map(data => ({
-        ...data,
-        centralPoint: getCentralPoint(data.rect)
+        ...highlight,
+        centralPoint: getCentralPoint(highlight.rect)
       }));
   }
 
@@ -94,18 +88,22 @@ const navigatorModule = (function () {
 
 const domHighlightModule = (function () {
   function createHighlightsOnPage(domDocument) {
-    return queryClickableAll(domDocument).map(createHighlightFromClickable.bind(null, domDocument));
+    return queryClickableAll(domDocument)
+      .map(assignBoundingClientRect)
+      .filter(isClickableBigEnough)
+      .filter(isClickableVisibleOnThePage)
+      .map(createHighlightFromClickable.bind(null, domDocument))
   }
 
   function selectHighlight(highlight) {
-    Object.assign(highlight.style, {
+    Object.assign(highlight.element.style, {
       background: "yellow",
       opacity: .5
     });
   }
 
   function unselectHighlight(highlight) {
-    Object.assign(highlight.style, {
+    Object.assign(highlight.element.style, {
       background: "transparent",
       opacity: null
     });
@@ -116,20 +114,34 @@ const domHighlightModule = (function () {
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
-  function createHighlightFromClickable(domDocument, clickableElement) {
-    const elementPosition = clickableElement.getBoundingClientRect();
-    const highlight = domDocument.createElement("div");
-    Object.assign(highlight.style, {
+  function createHighlightFromClickable(domDocument, { rect }) {
+    const element = domDocument.createElement("div");
+    Object.assign(element.style, {
       background: "transparent",
       border: "2px solid black",
-      height: elementPosition.height + "px",
-      left: (elementPosition.left + domDocument.documentElement.scrollLeft) + "px",
+      height: rect.height + "px",
+      left: (rect.left + domDocument.documentElement.scrollLeft) + "px",
       position: "absolute",
-      top: (elementPosition.top + domDocument.documentElement.scrollTop) + "px",
-      width: elementPosition.width + "px",
+      top: (rect.top + domDocument.documentElement.scrollTop) + "px",
+      width: rect.width + "px",
       zIndex: 999999999
     });
-    return highlight;
+    return { element, rect };
+  }
+
+  function assignBoundingClientRect(clickableElement) {
+    return {
+      clickableElement,
+      rect: clickableElement.getBoundingClientRect()
+    };
+  }
+
+  function isClickableBigEnough({ rect }) {
+    return rect.width > 10 && rect.height > 10;
+  }
+
+  function isClickableVisibleOnThePage({ rect }) {
+    return rect.top >= 0 && rect.left >= 0;
   }
 
   return {
@@ -142,11 +154,15 @@ const domHighlightModule = (function () {
 const highlightsModule = (function () {
   function show(highlights, domWindow) {
     const domDocument = domWindow.document;
-    highlights.forEach(highlight => domDocument.body.appendChild(highlight));
+    highlights
+      .map(highlight => highlight.element)
+      .forEach(highlight => domDocument.body.appendChild(highlight));
   }
 
   function hide(highlights) {
-    highlights.forEach(highlight => highlight.remove());
+    highlights
+      .map(highlight => highlight.element)
+      .forEach(highlight => highlight.remove());
   }
 
   return {
