@@ -233,5 +233,3 @@ const appModule = (function () {
 })();
 
 appModule.start(window);
-
-// filter very small highlights
