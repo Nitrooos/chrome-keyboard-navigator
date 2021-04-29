@@ -1,3 +1,10 @@
+const utilsModule = (function () {
+  return {
+    first: array => array[0],
+    last: array => array[array.length - 1]
+  };
+})();
+
 const navigatorModule = (function () {
   function getCentralHighlight(highlights, pageCentralPoint) {
     const highlightsSortedByDistanceFromCenter = mapHighlightsWithDistanceFromPoint(highlights, pageCentralPoint)
@@ -28,11 +35,12 @@ const navigatorModule = (function () {
       verticalDistances.filter(({ distance }) => distance < 0)
     ].map(nearestHighlights => nearestHighlights.map(({ highlight }) => highlight));
 
+    const { first, last } = utilsModule;
     return {
-      down: downNearest[0],
-      left: leftNearest[leftNearest.length - 1],
-      right: rightNearest[0],
-      up: upNearest[upNearest.length - 1]
+      down: first(downNearest),
+      left: last(leftNearest),
+      right: first(rightNearest),
+      up: last(upNearest)
     };
   }
 
@@ -209,3 +217,5 @@ const appModule = (function () {
 })();
 
 appModule.start(window);
+
+// filter very small highlights
