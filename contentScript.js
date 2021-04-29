@@ -128,7 +128,7 @@ const domHighlightModule = (function () {
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
-  function createHighlightFromClickable(domDocument, { rect }) {
+  function createHighlightFromClickable(domDocument, { clickable, rect }) {
     const element = domDocument.createElement("div");
     Object.assign(element.style, {
       background: "transparent",
@@ -140,12 +140,12 @@ const domHighlightModule = (function () {
       width: rect.width + "px",
       zIndex: 999999999
     });
-    return { element, rect };
+    return { clickable, element, rect };
   }
 
   function assignBoundingClientRect(clickableElement) {
     return {
-      clickableElement,
+      clickable: clickableElement,
       rect: clickableElement.getBoundingClientRect()
     };
   }
