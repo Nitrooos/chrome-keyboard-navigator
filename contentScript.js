@@ -7,7 +7,8 @@ const utilsModule = (function () {
 
 const navigatorModule = (function () {
   function getCentralHighlight(highlights, pageCentralPoint) {
-    const highlightsSortedByDistanceFromCenter = mapHighlightsWithDistanceFromPoint(highlights, pageCentralPoint)
+    const highlightsSortedByDistanceFromCenter = highlights
+      .map(assignDistanceFromPoint.bind(null, pageCentralPoint))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
 
     return highlightsSortedByDistanceFromCenter[0];
@@ -15,13 +16,13 @@ const navigatorModule = (function () {
 
   function getNearestHighlights(highlights, selectedHighlight) {
     const selectedHighlightCentralPoint = getCentralPoint(selectedHighlight.rect);
-    const highlightsWithPositionData = mapHighlightsWithCentralPointData(highlights);
+    const highlightsWithCentralPoints = highlights.map(assignCentralPoint);
 
-    const verticalDistances = highlightsWithPositionData
+    const verticalDistances = highlightsWithCentralPoints
       .filter(({ rect }) => rectsVerticallyAligned(selectedHighlight.rect, rect))
       .map(data => ({ ...data, distance: data.centralPoint.y - selectedHighlightCentralPoint.y }))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
-    const horizontalDistances = highlightsWithPositionData
+    const horizontalDistances = highlightsWithCentralPoints
       .filter(({ rect }) => rectsHorizontallyAligned(selectedHighlight.rect, rect))
       .map(data => ({ ...data, distance: data.centralPoint.x - selectedHighlightCentralPoint.x }))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
@@ -42,20 +43,19 @@ const navigatorModule = (function () {
     };
   }
 
-  function mapHighlightsWithDistanceFromPoint(highlights, point) {
-    return mapHighlightsWithCentralPointData(highlights)
-      .map(data => ({
-        ...data,
-        distance: getCartesianDistance(data.centralPoint, point)
-      }));
+  function assignDistanceFromPoint(point, highlight) {
+    const highlightWithCentralPoint = assignCentralPoint(highlight);
+    return {
+      ...highlightWithCentralPoint,
+      distance: getCartesianDistance(highlightWithCentralPoint.centralPoint, point)
+    };
   }
 
-  function mapHighlightsWithCentralPointData(highlights) {
-    return highlights
-      .map(highlight => ({
-        ...highlight,
-        centralPoint: getCentralPoint(highlight.rect)
-      }));
+  function assignCentralPoint(highlight) {
+    return {
+      ...highlight,
+      centralPoint: getCentralPoint(highlight.rect)
+    };
   }
 
   function rectsVerticallyAligned(rect1, rect2) {
