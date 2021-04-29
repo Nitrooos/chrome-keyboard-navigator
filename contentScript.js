@@ -11,7 +11,8 @@ const navigatorModule = (function () {
       .map(assignDistanceFromPoint.bind(null, pageCentralPoint))
       .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
 
-    return highlightsSortedByDistanceFromCenter[0];
+    const { first } = utilsModule;
+    return first(highlightsSortedByDistanceFromCenter);
   }
 
   function getNearestHighlights(highlights, selectedHighlight) {
