@@ -230,7 +230,7 @@ const appModule = (function () {
   }
 
   function simulateClick() {
-    const elementToClick = self.selectedHighlight.clickable;
+    const elementToClick = self.selectedHighlight?.clickable;
     if (elementToClick) {
       elementToClick.click();
       hideHighlights();
