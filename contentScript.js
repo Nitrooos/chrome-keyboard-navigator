@@ -123,8 +123,15 @@ const domHighlightModule = (function () {
       .forEach(highlight => highlight.remove());
   }
 
+  function simulateUserClickOnElement(element) {
+    const elementIsInput = element.matches("input");
+    const elementIsOfTypeButton = ["button", "reset", "submit"].includes(element.type);
+    const shouldBeFocused = elementIsInput && !elementIsOfTypeButton;
+    shouldBeFocused ? element.focus() : element.click();
+  }
+
   function queryClickableAll(domDocument) {
-    const clickableSelector = "a, button, input[type=\"button\"], input[type=\"submit\"], input[type=\"reset\"]";
+    const clickableSelector = "a, button, input";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
@@ -163,6 +170,7 @@ const domHighlightModule = (function () {
     hideHighlights,
     selectHighlight,
     showHighlights,
+    simulateUserClickOnElement,
     unselectHighlight
   }
 })();
@@ -230,9 +238,9 @@ const appModule = (function () {
   }
 
   function simulateClick() {
-    const elementToClick = self.selectedHighlight?.clickable;
-    if (elementToClick) {
-      elementToClick.click();
+    const element = self.selectedHighlight?.clickable;
+    if (element) {
+      domHighlightModule.simulateUserClickOnElement(element);
       hideHighlights();
     }
   }
