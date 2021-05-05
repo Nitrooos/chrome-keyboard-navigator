@@ -195,6 +195,7 @@ const appModule = (function () {
         case "ArrowLeft": navigateHighlights(event, "left"); break;
         case "ArrowRight": navigateHighlights(event, "right"); break;
         case "Enter": simulateClick(event); break;
+        case "Escape": hideHighlights(); break;
       }
     });
   }
