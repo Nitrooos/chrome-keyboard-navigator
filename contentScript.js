@@ -131,7 +131,7 @@ const domHighlightModule = (function () {
   }
 
   function queryClickableAll(domDocument) {
-    const clickableSelector = "a, button, input";
+    const clickableSelector = "a, button, input, textarea";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
