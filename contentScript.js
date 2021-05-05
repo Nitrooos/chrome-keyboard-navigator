@@ -194,7 +194,7 @@ const appModule = (function () {
         case "ArrowDown": navigateHighlights(event, "down"); break;
         case "ArrowLeft": navigateHighlights(event, "left"); break;
         case "ArrowRight": navigateHighlights(event, "right"); break;
-        case "Enter": simulateClick(); break;
+        case "Enter": simulateClick(event); break;
       }
     });
   }
@@ -237,10 +237,11 @@ const appModule = (function () {
     }
   }
 
-  function simulateClick() {
+  function simulateClick(event) {
     const element = self.selectedHighlight?.clickable;
     if (element) {
       domHighlightModule.simulateUserClickOnElement(element);
+      event.preventDefault();
       hideHighlights();
     }
   }
