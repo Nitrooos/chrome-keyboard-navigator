@@ -124,14 +124,14 @@ const domHighlightModule = (function () {
   }
 
   function simulateUserClickOnElement(element) {
-    const elementIsInput = element.matches("input");
+    const elementNeedsFocus = element.matches("input, select, textarea");
     const elementIsOfTypeButton = ["button", "reset", "submit"].includes(element.type);
-    const shouldBeFocused = elementIsInput && !elementIsOfTypeButton;
+    const shouldBeFocused = elementNeedsFocus && !elementIsOfTypeButton;
     shouldBeFocused ? element.focus() : element.click();
   }
 
   function queryClickableAll(domDocument) {
-    const clickableSelector = "a, button, input, textarea";
+    const clickableSelector = "a, button, input, select, textarea";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
   }
 
