@@ -124,9 +124,13 @@ const domHighlightModule = (function () {
   }
 
   function simulateUserClickOnElement(element) {
-    const elementNeedsFocus = element.matches("input, select, textarea");
-    const elementIsOfTypeButton = ["button", "reset", "submit"].includes(element.type);
-    const shouldBeFocused = elementNeedsFocus && !elementIsOfTypeButton;
+    const tagsNeedingFocus = ["select", "textarea"];
+    const tagsNeedingFocusSelector = tagsNeedingFocus.join(",");
+
+    const inputTypesNeedingClick = ["button", "checkbox", "file", "image", "radio", "reset", "submit"];
+    const inputNeedingClickSelector = inputTypesNeedingClick.map(type => `input[type="${type}"]`).join(",");
+
+    const shouldBeFocused = element.matches(tagsNeedingFocusSelector) && !element.matches(inputNeedingClickSelector);
     shouldBeFocused ? element.focus() : element.click();
   }
 
