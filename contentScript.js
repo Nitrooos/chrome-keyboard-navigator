@@ -123,17 +123,6 @@ const domHighlightModule = (function () {
       .forEach(highlight => highlight.remove());
   }
 
-  function simulateUserClickOnElement(element) {
-    const tagsNeedingFocus = ["select", "textarea"];
-    const tagsNeedingFocusSelector = tagsNeedingFocus.join(",");
-
-    const inputTypesNeedingClick = ["button", "checkbox", "file", "image", "radio", "reset", "submit"];
-    const inputNeedingClickSelector = inputTypesNeedingClick.map(type => `input[type="${type}"]`).join(",");
-
-    const shouldBeFocused = element.matches(tagsNeedingFocusSelector) && !element.matches(inputNeedingClickSelector);
-    shouldBeFocused ? element.focus() : element.click();
-  }
-
   function queryClickableAll(domDocument) {
     const clickableSelector = "a, button, input, select, textarea";
     return Array.from(domDocument.querySelectorAll(clickableSelector));
@@ -174,13 +163,13 @@ const domHighlightModule = (function () {
     hideHighlights,
     selectHighlight,
     showHighlights,
-    simulateUserClickOnElement,
     unselectHighlight
   }
 })();
 
 const appModule = (function () {
   const self = {
+    focusedElement: null,
     highlights: [],
     highlightsVisible: false,
     selectedHighlight: null
@@ -199,7 +188,11 @@ const appModule = (function () {
         case "ArrowLeft": navigateHighlights(event, "left"); break;
         case "ArrowRight": navigateHighlights(event, "right"); break;
         case "Enter": simulateClick(event); break;
-        case "Escape": hideHighlights(); break;
+        case "Escape": {
+          hideHighlights();
+          blurFocusedElement();
+          break;
+        }
       }
     });
   }
@@ -245,9 +238,32 @@ const appModule = (function () {
   function simulateClick(event) {
     const element = self.selectedHighlight?.clickable;
     if (element) {
-      domHighlightModule.simulateUserClickOnElement(element);
       event.preventDefault();
+      const clickSimulatingMethod = getClickSimulatingMethodForElement(element);
+      element[clickSimulatingMethod]();
+      if (clickSimulatingMethod === "focus") {
+        self.focusedElement = element;
+      }
+
       hideHighlights();
+    }
+  }
+
+  function getClickSimulatingMethodForElement(element) {
+    const tagsNeedingFocus = ["input", "select", "textarea"];
+    const tagsNeedingFocusSelector = tagsNeedingFocus.join(",");
+
+    const inputTypesNeedingClick = ["button", "checkbox", "file", "image", "radio", "reset", "submit"];
+    const inputNeedingClickSelector = inputTypesNeedingClick.map(type => `input[type="${type}"]`).join(",");
+
+    const shouldBeFocused = element.matches(tagsNeedingFocusSelector) && !element.matches(inputNeedingClickSelector);
+    return shouldBeFocused ? "focus" : "click";
+  }
+
+  function blurFocusedElement() {
+    if (self.focusedElement) {
+      self.focusedElement.blur();
+      self.focusedElement = null;
     }
   }
 
