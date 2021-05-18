@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "system",
+    "noImplicitAny": false,
+    "lib": ["ES2015", "DOM"],
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outFile": "build/app.js",
+    "sourceMap": true,
+    "target": "ES6"
+  },
+  "include": ["src/**/*"]
+}
