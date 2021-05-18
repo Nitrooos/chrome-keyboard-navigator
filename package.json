@@ -4,6 +4,7 @@
   "description": "Browser extension to make navigation between links easier!",
   "main": "contentScript.js",
   "scripts": {
+    "start": "webpack -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

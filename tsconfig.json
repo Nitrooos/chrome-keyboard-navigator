@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "module": "system",
-    "noImplicitAny": false,
+    "module": "commonjs",
     "lib": ["ES2015", "DOM"],
-    "removeComments": true,
+    "noImplicitAny": false,
+    "outDir": "build",
     "preserveConstEnums": true,
-    "outFile": "build/app.js",
+    "removeComments": true,
+    "rootDir": "src",
     "sourceMap": true,
     "target": "ES6"
   },
