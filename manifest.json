@@ -10,7 +10,7 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["contentScript.js"]
+      "js": ["build/main-bundle.js"]
     }
   ],
   "action": {
