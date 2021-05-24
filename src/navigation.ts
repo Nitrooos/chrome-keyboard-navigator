@@ -11,6 +11,14 @@ type Point = {
   y: number;
 };
 
+interface HighlightDistance extends Highlight {
+  distance: number;
+}
+
+interface HighlightCentralPoint extends Highlight {
+  centralPoint: Point;
+}
+
 function getCentralHighlight(highlights: Highlight[], pageCentralPoint: Point): Highlight {
   const highlightsSortedByDistanceFromCenter = highlights
     .map(highlight => assignDistanceFromPoint(pageCentralPoint, highlight))
@@ -50,7 +58,7 @@ function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highli
   };
 }
 
-function assignDistanceFromPoint(point: Point, highlight: Highlight) {
+function assignDistanceFromPoint(point: Point, highlight: Highlight): HighlightDistance {
   const highlightWithCentralPoint = assignCentralPoint(highlight);
   return {
     ...highlightWithCentralPoint,
@@ -58,7 +66,7 @@ function assignDistanceFromPoint(point: Point, highlight: Highlight) {
   };
 }
 
-function assignCentralPoint(highlight: Highlight) {
+function assignCentralPoint(highlight: Highlight): HighlightCentralPoint {
   return {
     ...highlight,
     centralPoint: getCentralPoint(highlight.rect)
