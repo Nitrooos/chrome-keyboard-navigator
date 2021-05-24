@@ -6,7 +6,13 @@ export const DomHighlight = {
   hideHighlights
 };
 
-function createHighlightsOnPage(domDocument) {
+export type Highlight = {
+  clickable: HTMLElement;
+  element: HTMLElement;
+  rect: DOMRect;
+};
+
+function createHighlightsOnPage(domDocument: Document): Highlight[] {
   return queryClickableAll(domDocument)
     .map(assignBoundingClientRect)
     .filter(isClickableBigEnough)
@@ -14,39 +20,38 @@ function createHighlightsOnPage(domDocument) {
     .map(createHighlightFromClickable.bind(null, domDocument))
 }
 
-function selectHighlight(highlight) {
+function selectHighlight(highlight: Highlight) {
   Object.assign(highlight.element.style, {
     background: "yellow",
     opacity: .5
   });
 }
 
-function unselectHighlight(highlight) {
+function unselectHighlight(highlight: Highlight) {
   Object.assign(highlight.element.style, {
     background: "transparent",
     opacity: null
   });
 }
 
-function showHighlights(highlights, domWindow) {
-  const domDocument = domWindow.document;
+function showHighlights(highlights: Highlight[], domDocument: Document) {
   highlights
     .map(highlight => highlight.element)
     .forEach(highlight => domDocument.body.appendChild(highlight));
 }
 
-function hideHighlights(highlights) {
+function hideHighlights(highlights: Highlight[]) {
   highlights
     .map(highlight => highlight.element)
     .forEach(highlight => highlight.remove());
 }
 
-function queryClickableAll(domDocument) {
+function queryClickableAll(domDocument: Document): HTMLElement[] {
   const clickableSelector = "a, button, input, select, textarea";
   return Array.from(domDocument.querySelectorAll(clickableSelector));
 }
 
-function createHighlightFromClickable(domDocument, { clickable, rect }) {
+function createHighlightFromClickable(domDocument: Document, { clickable, rect }): Highlight {
   const element = domDocument.createElement("div");
   Object.assign(element.style, {
     background: "transparent",
@@ -61,17 +66,17 @@ function createHighlightFromClickable(domDocument, { clickable, rect }) {
   return { clickable, element, rect };
 }
 
-function assignBoundingClientRect(clickableElement) {
+function assignBoundingClientRect(clickableElement: HTMLElement): Omit<Highlight, "element"> {
   return {
     clickable: clickableElement,
     rect: clickableElement.getBoundingClientRect()
   };
 }
 
-function isClickableBigEnough({ rect }) {
+function isClickableBigEnough({ rect }: Highlight): boolean {
   return rect.width > 10 && rect.height > 10;
 }
 
-function isClickableVisibleOnThePage({ rect }) {
+function isClickableVisibleOnThePage({ rect }: Highlight): boolean {
   return rect.top >= 0 && rect.left >= 0;
 }

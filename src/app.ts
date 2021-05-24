@@ -1,18 +1,29 @@
-import { DomHighlight } from "./domHighlight";
+import { DomHighlight, Highlight } from "./domHighlight";
 import { Navigator } from "./navigation";
 
-export function start(domWindow) {
+export function start(domWindow: Window) {
   listenKeydownEvents(domWindow);
 }
 
-const self = {
+type AppState = {
+  focusedElement: HTMLElement,
+  highlights: Highlight[],
+  highlightsVisible: boolean,
+  selectedHighlight: Highlight
+}
+
+type Direction = "up" | "down" | "left" | "right";
+
+type ClickSimulatingMethod = "click" | "focus";
+
+const appState: AppState = {
   focusedElement: null,
   highlights: [],
   highlightsVisible: false,
   selectedHighlight: null
 };
 
-function listenKeydownEvents(domWindow) {
+function listenKeydownEvents(domWindow: Window) {
   domWindow.document.addEventListener("keydown", (event) => {
     switch (event.key) {
       case "f": toggleHighlights(domWindow); break;
@@ -30,59 +41,59 @@ function listenKeydownEvents(domWindow) {
   });
 }
 
-function toggleHighlights(domWindow) {
-  self.highlightsVisible ? hideHighlights() : showHighlights(domWindow);
+function toggleHighlights(domWindow: Window) {
+  appState.highlightsVisible ? hideHighlights() : showHighlights(domWindow);
 }
 
-function showHighlights(domWindow) {
-  self.highlights = DomHighlight.createHighlightsOnPage(domWindow.document);
-  DomHighlight.showHighlights(self.highlights, domWindow);
+function showHighlights(domWindow: Window) {
+  appState.highlights = DomHighlight.createHighlightsOnPage(domWindow.document);
+  DomHighlight.showHighlights(appState.highlights, domWindow.document);
 
   const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
-  self.selectedHighlight = Navigator.getCentralHighlight(self.highlights, centralPoint);
-  DomHighlight.selectHighlight(self.selectedHighlight);
+  appState.selectedHighlight = Navigator.getCentralHighlight(appState.highlights, centralPoint);
+  DomHighlight.selectHighlight(appState.selectedHighlight);
 
-  self.highlightsVisible = true;
+  appState.highlightsVisible = true;
 }
 
 function hideHighlights() {
-  DomHighlight.hideHighlights(self.highlights);
-  self.highlights = [];
-  self.selectedHighlight = null;
-  self.highlightsVisible = false;
+  DomHighlight.hideHighlights(appState.highlights);
+  appState.highlights = [];
+  appState.selectedHighlight = null;
+  appState.highlightsVisible = false;
 }
 
-function navigateHighlights(event, direction) {
-  if (self.highlightsVisible) {
-    const nearestHighlights = Navigator.getNearestHighlights(self.highlights, self.selectedHighlight);
+function navigateHighlights(event: Event, direction: Direction) {
+  if (appState.highlightsVisible) {
+    const nearestHighlights = Navigator.getNearestHighlights(appState.highlights, appState.selectedHighlight);
     navigateHighlightTo(nearestHighlights[direction]);
     event.preventDefault();
   }
 }
 
-function navigateHighlightTo(nearestHighlight) {
+function navigateHighlightTo(nearestHighlight: Highlight) {
   if (nearestHighlight) {
-    DomHighlight.unselectHighlight(self.selectedHighlight)
-    self.selectedHighlight = nearestHighlight;
-    DomHighlight.selectHighlight(self.selectedHighlight);
+    DomHighlight.unselectHighlight(appState.selectedHighlight)
+    appState.selectedHighlight = nearestHighlight;
+    DomHighlight.selectHighlight(appState.selectedHighlight);
   }
 }
 
-function simulateClick(event) {
-  const element = self.selectedHighlight?.clickable;
+function simulateClick(event: Event) {
+  const element = appState.selectedHighlight?.clickable;
   if (element) {
     event.preventDefault();
     const clickSimulatingMethod = getClickSimulatingMethodForElement(element);
     element[clickSimulatingMethod]();
     if (clickSimulatingMethod === "focus") {
-      self.focusedElement = element;
+      appState.focusedElement = element;
     }
 
     hideHighlights();
   }
 }
 
-function getClickSimulatingMethodForElement(element) {
+function getClickSimulatingMethodForElement(element: HTMLElement): ClickSimulatingMethod {
   const tagsNeedingFocus = ["input", "select", "textarea"];
   const tagsNeedingFocusSelector = tagsNeedingFocus.join(",");
 
@@ -94,8 +105,8 @@ function getClickSimulatingMethodForElement(element) {
 }
 
 function blurFocusedElement() {
-  if (self.focusedElement) {
-    self.focusedElement.blur();
-    self.focusedElement = null;
+  if (appState.focusedElement) {
+    appState.focusedElement.blur();
+    appState.focusedElement = null;
   }
 }
