@@ -24,7 +24,7 @@ const appState: AppState = {
 };
 
 function listenKeydownEvents(domWindow: Window) {
-  domWindow.document.addEventListener("keydown", (event) => {
+  const keydownHandler = (event: KeyboardEvent) => {
     switch (event.key) {
       case "f": toggleHighlights(domWindow); break;
       case "ArrowUp": navigateHighlights(event, "up"); break;
@@ -38,7 +38,18 @@ function listenKeydownEvents(domWindow: Window) {
         break;
       }
     }
-  });
+  };
+
+  domWindow.document.addEventListener("keydown", filterModifierKeys(keydownHandler));
+}
+
+function filterModifierKeys(func: (e: KeyboardEvent) => void) {
+  return (event: KeyboardEvent) => {
+    const modifierKeysPressed = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+    if (!modifierKeysPressed) {
+      func(event);
+    }
+  };
 }
 
 function toggleHighlights(domWindow: Window) {
