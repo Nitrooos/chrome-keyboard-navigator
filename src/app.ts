@@ -1,4 +1,5 @@
-import { DomHighlight, Highlight } from "./domHighlight";
+import { DomHighlight } from "./domHighlight";
+import { Highlight } from "./models";
 import { Navigator } from "./navigation";
 
 export function start(domWindow: Window) {

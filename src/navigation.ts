@@ -1,4 +1,4 @@
-import { Highlight, Rectangle } from "./domHighlight";
+import { Highlight, Rectangle } from "./models";
 import { Utils } from "./utils";
 
 export const Navigator = {
