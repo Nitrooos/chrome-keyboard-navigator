@@ -6,10 +6,12 @@ export const DomHighlight = {
   hideHighlights
 };
 
+export type Rectangle = DOMRect;
+
 export type Highlight = {
   clickable: HTMLElement;
   element: HTMLElement;
-  rect: DOMRect;
+  rect: Rectangle;
 };
 
 function createHighlightsOnPage(domDocument: Document): Highlight[] {
