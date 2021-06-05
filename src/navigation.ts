@@ -33,14 +33,11 @@ function getCentralHighlight(highlights: Highlight[], pageCentralPoint: Point): 
 }
 
 function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
-  const selectedHighlightCentralPoint = getCentralPoint(selectedHighlight.rect);
-  const highlightsDistances = highlights.map(highlight => {
-    const centralPoint = getCentralPoint(highlight.rect);
-    const cartesianDistance = getCartesianDistance(centralPoint, selectedHighlightCentralPoint);
-    const coverage = getAxesCoverage(selectedHighlight.rect, highlight.rect);
-    const coverageDistance = getCoverageDistance(cartesianDistance, coverage);
-    return [highlight, highlight.rect, coverageDistance];
-  }) as [Highlight, Rectangle, CoverageDistance][];
+  const highlightsDistances = highlights.map(highlight => [
+    highlight,
+    highlight.rect,
+    getCoverageDistance(selectedHighlight.rect, highlight.rect)
+  ]) as [Highlight, Rectangle, CoverageDistance][];
 
   const shRect = selectedHighlight.rect;
   const [below, left, right, above] = [
@@ -52,11 +49,11 @@ function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highli
   const horizontalDistanceAsc = ([, , c1], [, , c2]) => c1.horizontal - c2.horizontal;
   const verticalDistanceAsc = ([, , c1], [, , c2]) => c1.vertical - c2.vertical;
   const [downNearest, leftNearest, rightNearest, upNearest] = [
-    highlightsDistances.filter(below).sort(verticalDistanceAsc).map(([highlight]) => highlight),
-    highlightsDistances.filter(left).sort(horizontalDistanceAsc).map(([highlight]) => highlight),
-    highlightsDistances.filter(right).sort(horizontalDistanceAsc).map(([highlight]) => highlight),
-    highlightsDistances.filter(above).sort(verticalDistanceAsc).map(([highlight]) => highlight)
-  ];
+    highlightsDistances.filter(below).sort(verticalDistanceAsc),
+    highlightsDistances.filter(left).sort(horizontalDistanceAsc),
+    highlightsDistances.filter(right).sort(horizontalDistanceAsc),
+    highlightsDistances.filter(above).sort(verticalDistanceAsc)
+  ].map(nearest => nearest.map(([highlight]) => highlight));
 
   const { first } = Utils.Array;
   return {
@@ -67,10 +64,15 @@ function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highli
   }
 }
 
-function getCoverageDistance(distance: number, { xAxis, yAxis }: Coverage): CoverageDistance {
+function getCoverageDistance(r1: Rectangle, r2: Rectangle): CoverageDistance {
+  const centralPoint1 = getCentralPoint(r1);
+  const centralPoint2 = getCentralPoint(r2);
+  const cartesianDistance = getCartesianDistance(centralPoint1, centralPoint2);
+  const coverage = getAxesCoverage(r1, r2);
+
   return {
-    horizontal: distance*(1 + yAxis**2),
-    vertical: distance*(1 + xAxis**2)
+    horizontal: cartesianDistance*(1 + coverage.yAxis**2),
+    vertical: cartesianDistance*(1 + coverage.xAxis**2)
   };
 }
 
