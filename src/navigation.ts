@@ -101,8 +101,8 @@ function getYAxisCoverage(r1: Rectangle, r2: Rectangle): number {
   return (lacksCoverageUp + lacksCoverageDown)/shorter.height;
 }
 
-function getCentralPoint(rect: Rectangle): Point {
-  return { x: rect.x + .5*rect.width, y: rect.y + .5*rect.height };
+function getCentralPoint({ x, width, y, height }: Rectangle): Point {
+  return { x: x + .5*width, y: y + .5*height };
 }
 
 function getCartesianDistance(point1: Point, point2: Point): number {
