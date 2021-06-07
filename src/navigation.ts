@@ -2,8 +2,8 @@ import { Highlight, Point, Rectangle } from "./models";
 import { Utils } from "./utils";
 
 export const Navigator = {
-  getCentralHighlight,
   getCentralPoint,
+  getNearestHighlight,
   getNearestHighlights
 };
 
@@ -17,15 +17,15 @@ type CoverageDistance = {
   vertical: number;
 };
 
-function getCentralHighlight(highlights: Highlight[], pageCentralPoint: Point): Highlight {
-  const highlightsSortedByDistanceFromCenter = highlights
+function getNearestHighlight(highlights: Highlight[], fromPosition: Point): Highlight {
+  const nearestHighlights = highlights
     .map(highlight => ({ highlight, centralPoint: getCentralPoint(highlight.rect) }))
-    .map(({ highlight, centralPoint }) => ({ highlight, distance: getCartesianDistance(pageCentralPoint, centralPoint) }))
+    .map(({ highlight, centralPoint }) => ({ highlight, distance: getCartesianDistance(fromPosition, centralPoint) }))
     .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance)
     .map(({ highlight }) => highlight);
 
   const { first } = Utils.Array;
-  return first(highlightsSortedByDistanceFromCenter);
+  return first(nearestHighlights);
 }
 
 function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
