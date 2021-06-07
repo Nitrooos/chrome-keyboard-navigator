@@ -3,6 +3,7 @@ import { Utils } from "./utils";
 
 export const Navigator = {
   getCentralHighlight,
+  getCentralPoint,
   getNearestHighlights
 };
 
