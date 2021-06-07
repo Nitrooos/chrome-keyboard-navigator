@@ -1,14 +1,9 @@
-import { Highlight, Rectangle } from "./models";
+import { Highlight, Point, Rectangle } from "./models";
 import { Utils } from "./utils";
 
 export const Navigator = {
   getCentralHighlight,
   getNearestHighlights
-};
-
-type Point = {
-  x: number;
-  y: number;
 };
 
 type Coverage = {

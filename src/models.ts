@@ -5,3 +5,8 @@ export type Highlight = {
   element: HTMLElement;
   rect: Rectangle;
 };
+
+export type Point = {
+  x: number;
+  y: number;
+};
