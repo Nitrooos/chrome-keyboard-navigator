@@ -1,5 +1,5 @@
 import { DomHighlight } from "./domHighlight";
-import { Highlight } from "./models";
+import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
 import { Utils } from "./utils";
 
@@ -12,6 +12,7 @@ type AppState = {
   highlights: Highlight[],
   highlightsVisible: boolean,
   isUserTypingText: boolean,
+  lastSelectedHighlightPosition: Point,
   selectedHighlight: Highlight
 }
 
@@ -24,6 +25,7 @@ const appState: AppState = {
   highlights: [],
   highlightsVisible: false,
   isUserTypingText: false,
+  lastSelectedHighlightPosition: null,
   selectedHighlight: null
 };
 
