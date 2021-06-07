@@ -4,7 +4,7 @@ import { Utils } from "./utils";
 export const Navigator = {
   getCentralPoint,
   getNearestHighlight,
-  getNearestHighlights
+  getNearestDirectionalHighlights
 };
 
 type Coverage = {
@@ -28,7 +28,7 @@ function getNearestHighlight(highlights: Highlight[], fromPosition: Point): High
   return first(nearestHighlights);
 }
 
-function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
+function getNearestDirectionalHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
   const highlightsDistances = highlights.map(highlight => [
     highlight,
     highlight.rect,

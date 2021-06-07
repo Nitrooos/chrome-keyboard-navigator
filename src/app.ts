@@ -116,7 +116,7 @@ function hideHighlights() {
 
 function navigateHighlights(event: Event, direction: Direction) {
   if (appState.highlightsVisible) {
-    const nearestHighlights = Navigator.getNearestHighlights(appState.highlights, appState.selectedHighlight);
+    const nearestHighlights = Navigator.getNearestDirectionalHighlights(appState.highlights, appState.selectedHighlight);
     navigateHighlightTo(nearestHighlights[direction]);
     event.preventDefault();
   }
