@@ -1,15 +1,11 @@
+import { Highlight } from "./models";
+
 export const DomHighlight = {
   createHighlightsOnPage,
   selectHighlight,
   unselectHighlight,
   showHighlights,
   hideHighlights
-};
-
-export type Highlight = {
-  clickable: HTMLElement;
-  element: HTMLElement;
-  rect: DOMRect;
 };
 
 function createHighlightsOnPage(domDocument: Document): Highlight[] {

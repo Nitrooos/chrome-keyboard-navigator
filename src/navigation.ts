@@ -1,4 +1,4 @@
-import { Highlight } from "./domHighlight";
+import { Highlight, Rectangle } from "./models";
 import { Utils } from "./utils";
 
 export const Navigator = {
@@ -11,84 +11,98 @@ type Point = {
   y: number;
 };
 
-interface HighlightDistance extends Highlight {
-  distance: number;
-}
+type Coverage = {
+  xAxis: number;
+  yAxis: number;
+};
 
-interface HighlightCentralPoint extends Highlight {
-  centralPoint: Point;
-}
+type CoverageDistance = {
+  horizontal: number;
+  vertical: number;
+};
 
 function getCentralHighlight(highlights: Highlight[], pageCentralPoint: Point): Highlight {
   const highlightsSortedByDistanceFromCenter = highlights
-    .map(highlight => assignDistanceFromPoint(pageCentralPoint, highlight))
-    .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
+    .map(highlight => ({ highlight, centralPoint: getCentralPoint(highlight.rect) }))
+    .map(({ highlight, centralPoint }) => ({ highlight, distance: getCartesianDistance(pageCentralPoint, centralPoint) }))
+    .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance)
+    .map(({ highlight }) => highlight);
 
   const { first } = Utils.Array;
   return first(highlightsSortedByDistanceFromCenter);
 }
 
 function getNearestHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
-  const selectedHighlightCentralPoint = getCentralPoint(selectedHighlight.rect);
-  const highlightsWithCentralPoints = highlights.map(assignCentralPoint);
+  const highlightsDistances = highlights.map(highlight => [
+    highlight,
+    highlight.rect,
+    getCoverageDistance(selectedHighlight.rect, highlight.rect)
+  ]) as [Highlight, Rectangle, CoverageDistance][];
 
-  const verticalDistances = highlightsWithCentralPoints
-    .filter(({ rect }) => rectsVerticallyAligned(selectedHighlight.rect, rect))
-    .filter(({ centralPoint }) => centralPoint.y )
-    .map(data => ({ ...data, distance: data.centralPoint.y - selectedHighlightCentralPoint.y }))
-    .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
-  const horizontalDistances = highlightsWithCentralPoints
-    .filter(({ rect }) => rectsHorizontallyAligned(selectedHighlight.rect, rect))
-    .map(data => ({ ...data, distance: data.centralPoint.x - selectedHighlightCentralPoint.x }))
-    .sort((highlight1, highlight2) => highlight1.distance - highlight2.distance);
-
+  const shRect = selectedHighlight.rect;
+  const [below, left, right, above] = [
+    ([, rect, _]) => rect.y > shRect.y + shRect.height/2,
+    ([, rect, _]) => rect.x + rect.width/2 < shRect.x,
+    ([, rect, _]) => rect.x > shRect.x + shRect.width/2,
+    ([, rect, _]) => rect.y + rect.height/2 < shRect.y
+  ];
+  const horizontalDistanceAsc = ([, , c1], [, , c2]) => c1.horizontal - c2.horizontal;
+  const verticalDistanceAsc = ([, , c1], [, , c2]) => c1.vertical - c2.vertical;
   const [downNearest, leftNearest, rightNearest, upNearest] = [
-    verticalDistances.filter(({ distance }) => distance > 0),
-    horizontalDistances.filter(({ distance }) => distance < 0),
-    horizontalDistances.filter(({ distance }) => distance > 0),
-    verticalDistances.filter(({ distance }) => distance < 0)
-  ] as Highlight[][];
+    highlightsDistances.filter(below).sort(verticalDistanceAsc),
+    highlightsDistances.filter(left).sort(horizontalDistanceAsc),
+    highlightsDistances.filter(right).sort(horizontalDistanceAsc),
+    highlightsDistances.filter(above).sort(verticalDistanceAsc)
+  ].map(nearest => nearest.map(([highlight]) => highlight));
 
-  const { first, last } = Utils.Array;
+  const { first } = Utils.Array;
   return {
     down: first(downNearest),
-    left: last(leftNearest),
+    left: first(leftNearest),
     right: first(rightNearest),
-    up: last(upNearest)
-  };
+    up: first(upNearest)
+  }
 }
 
-function assignDistanceFromPoint(point: Point, highlight: Highlight): HighlightDistance {
-  const highlightWithCentralPoint = assignCentralPoint(highlight);
+function getCoverageDistance(r1: Rectangle, r2: Rectangle): CoverageDistance {
+  const centralPoint1 = getCentralPoint(r1);
+  const centralPoint2 = getCentralPoint(r2);
+  const cartesianDistance = getCartesianDistance(centralPoint1, centralPoint2);
+  const coverage = getAxesCoverage(r1, r2);
+
   return {
-    ...highlightWithCentralPoint,
-    distance: getCartesianDistance(highlightWithCentralPoint.centralPoint, point)
+    horizontal: cartesianDistance*(1 + coverage.yAxis**2),
+    vertical: cartesianDistance*(1 + coverage.xAxis**2)
   };
 }
 
-function assignCentralPoint(highlight: Highlight): HighlightCentralPoint {
+function getAxesCoverage(r1: Rectangle, r2: Rectangle): Coverage {
   return {
-    ...highlight,
-    centralPoint: getCentralPoint(highlight.rect)
+    xAxis: getXAxisCoverage(r1, r2),
+    yAxis: getYAxisCoverage(r1, r2)
   };
 }
 
-function rectsVerticallyAligned(rect1: DOMRect, rect2: DOMRect): boolean {
-  return (
-    rect1.x < rect2.x + rect2.width
-    && rect1.x + rect1.width > rect2.x
-  );
+function getXAxisCoverage(r1: Rectangle, r2: Rectangle): number {
+  const shorter = r1.width <= r2.width ? r1 : r2;
+  const taller = r1.width > r2.width ? r1 : r2;
+  const { max } = Math;
+  const lacksCoverageLeft = max(0, taller.x - shorter.x);
+  const lacksCoverageRight = max(0, shorter.x + shorter.width - taller.x - taller.width);
+  return (lacksCoverageLeft + lacksCoverageRight)/shorter.width;
 }
 
-function rectsHorizontallyAligned(rect1: DOMRect, rect2: DOMRect): boolean {
-  return (
-    rect1.y < rect2.y + rect2.height
-    && rect1.y + rect1.height > rect2.y
-  );
+function getYAxisCoverage(r1: Rectangle, r2: Rectangle): number {
+  const shorter = r1.height <= r2.height ? r1 : r2;
+  const taller = r1.height > r2.height ? r1 : r2;
+  const { max } = Math;
+  const lacksCoverageUp = max(0, taller.y - shorter.y);
+  const lacksCoverageDown = max(0, shorter.y + shorter.height - taller.y - taller.height);
+  return (lacksCoverageUp + lacksCoverageDown)/shorter.height;
 }
 
-function getCentralPoint(rect: DOMRect): Point {
-  return { x: rect.x + .5*rect.width, y: rect.y + .5*rect.height };
+function getCentralPoint({ x, width, y, height }: Rectangle): Point {
+  return { x: x + .5*width, y: y + .5*height };
 }
 
 function getCartesianDistance(point1: Point, point2: Point): number {
