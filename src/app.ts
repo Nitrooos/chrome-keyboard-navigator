@@ -33,7 +33,7 @@ function listenKeydownEvents(domWindow: Window) {
       case "ArrowLeft": navigateHighlights(event, "left"); break;
       case "ArrowRight": navigateHighlights(event, "right"); break;
       case "Enter": simulateClick(event); break;
-      case "Escape": {
+      default: {
         hideHighlights();
         blurFocusedElement();
         break;
