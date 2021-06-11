@@ -1,6 +1,7 @@
 import { DomHighlight } from "./domHighlight";
 import { Highlight } from "./models";
 import { Navigator } from "./navigation";
+import { Utils } from "./utils";
 
 export function start(domWindow: Window) {
   listenKeydownEvents(domWindow);
@@ -10,6 +11,7 @@ type AppState = {
   focusedElement: HTMLElement,
   highlights: Highlight[],
   highlightsVisible: boolean,
+  isUserTypingText: boolean,
   selectedHighlight: Highlight
 }
 
@@ -21,6 +23,7 @@ const appState: AppState = {
   focusedElement: null,
   highlights: [],
   highlightsVisible: false,
+  isUserTypingText: false,
   selectedHighlight: null
 };
 
@@ -41,13 +44,45 @@ function listenKeydownEvents(domWindow: Window) {
     }
   };
 
-  domWindow.document.addEventListener("keydown", filterModifierKeys(keydownHandler));
+  const { composeRight } = Utils.Function;
+  const keydownModifiers = composeRight(filterModifierKeys, recognizeTypingText, filterWhenTypingText);
+  domWindow.document.addEventListener("keydown", keydownModifiers(keydownHandler));
 }
 
 function filterModifierKeys(func: (e: KeyboardEvent) => void) {
   return (event: KeyboardEvent) => {
     const modifierKeysPressed = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
     if (!modifierKeysPressed) {
+      func(event);
+    }
+  };
+}
+
+function recognizeTypingText(func: (e: KeyboardEvent) => void) {
+  let userTypingTimeout = null;
+
+  return (event: KeyboardEvent) => {
+    const userAlreadyTyped = !!userTypingTimeout;
+    userTypingTimeout = clearTimeout(userTypingTimeout);
+    if (appState.highlightsVisible) {
+      appState.isUserTypingText = false;
+    } else {
+      if (userAlreadyTyped) {
+        appState.isUserTypingText = true;
+      }
+      userTypingTimeout = setTimeout(() => {
+        userTypingTimeout = clearTimeout(userTypingTimeout);
+        appState.isUserTypingText = false;
+      }, 1000);
+    }
+
+    func(event);
+  };
+}
+
+function filterWhenTypingText(func: (e: KeyboardEvent) => void) {
+  return (event: KeyboardEvent) => {
+    if (!appState.isUserTypingText) {
       func(event);
     }
   };
