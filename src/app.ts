@@ -1,5 +1,5 @@
 import { DomHighlight } from "./domHighlight";
-import { Highlight } from "./models";
+import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
 import { Utils } from "./utils";
 
@@ -12,6 +12,7 @@ type AppState = {
   highlights: Highlight[],
   highlightsVisible: boolean,
   isUserTypingText: boolean,
+  lastSelectedHighlightPosition: Point,
   selectedHighlight: Highlight
 }
 
@@ -24,6 +25,7 @@ const appState: AppState = {
   highlights: [],
   highlightsVisible: false,
   isUserTypingText: false,
+  lastSelectedHighlightPosition: null,
   selectedHighlight: null
 };
 
@@ -97,7 +99,9 @@ function showHighlights(domWindow: Window) {
   DomHighlight.showHighlights(appState.highlights, domWindow.document);
 
   const centralPoint = { x: domWindow.innerWidth/2, y: domWindow.innerHeight/2 };
-  appState.selectedHighlight = Navigator.getCentralHighlight(appState.highlights, centralPoint);
+  const highlightPosition = appState.lastSelectedHighlightPosition || centralPoint;
+  appState.selectedHighlight = Navigator.getNearestHighlight(appState.highlights, highlightPosition);
+
   DomHighlight.selectHighlight(appState.selectedHighlight);
 
   appState.highlightsVisible = true;
@@ -112,7 +116,7 @@ function hideHighlights() {
 
 function navigateHighlights(event: Event, direction: Direction) {
   if (appState.highlightsVisible) {
-    const nearestHighlights = Navigator.getNearestHighlights(appState.highlights, appState.selectedHighlight);
+    const nearestHighlights = Navigator.getNearestDirectionalHighlights(appState.highlights, appState.selectedHighlight);
     navigateHighlightTo(nearestHighlights[direction]);
     event.preventDefault();
   }
@@ -122,6 +126,7 @@ function navigateHighlightTo(nearestHighlight: Highlight) {
   if (nearestHighlight) {
     DomHighlight.unselectHighlight(appState.selectedHighlight)
     appState.selectedHighlight = nearestHighlight;
+    appState.lastSelectedHighlightPosition = Navigator.getCentralPoint(nearestHighlight.rect);
     DomHighlight.selectHighlight(appState.selectedHighlight);
   }
 }
