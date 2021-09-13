@@ -1,4 +1,5 @@
 import { DomHighlight } from "./domHighlight";
+import { KeyActions } from "./key-actions";
 import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
 import { Utils } from "./utils";
@@ -31,13 +32,14 @@ const appState: AppState = {
 
 function listenKeydownEvents(domWindow: Window) {
   const keydownHandler = (event: KeyboardEvent) => {
+    const { TurnOn, Up, Down, Left, Right, Click } = KeyActions
     switch (event.key) {
-      case "f": toggleHighlights(domWindow); break;
-      case "ArrowUp": navigateHighlights(event, "up"); break;
-      case "ArrowDown": navigateHighlights(event, "down"); break;
-      case "ArrowLeft": navigateHighlights(event, "left"); break;
-      case "ArrowRight": navigateHighlights(event, "right"); break;
-      case "Enter": simulateClick(event); break;
+      case TurnOn: toggleHighlights(domWindow); break;
+      case Up: navigateHighlights(event, "up"); break;
+      case Down: navigateHighlights(event, "down"); break;
+      case Left: navigateHighlights(event, "left"); break;
+      case Right: navigateHighlights(event, "right"); break;
+      case Click: simulateClick(event); break;
       default: {
         hideHighlights();
         blurFocusedElement();
@@ -47,7 +49,7 @@ function listenKeydownEvents(domWindow: Window) {
   };
 
   const { composeRight } = Utils.Function;
-  const keydownModifiers = composeRight(filterModifierKeys, recognizeTypingText, filterWhenTypingText);
+  const keydownModifiers = composeRight(filterModifierKeys, recognizeTurningOn);
   domWindow.document.addEventListener("keydown", keydownModifiers(keydownHandler));
 }
 
@@ -60,31 +62,21 @@ function filterModifierKeys(func: (e: KeyboardEvent) => void) {
   };
 }
 
-function recognizeTypingText(func: (e: KeyboardEvent) => void) {
-  let userTypingTimeout = null;
+function recognizeTurningOn(func: (e: KeyboardEvent) => void) {
+  let firstKeydownTimeout = null;
 
   return (event: KeyboardEvent) => {
-    const userAlreadyTyped = !!userTypingTimeout;
-    userTypingTimeout = clearTimeout(userTypingTimeout);
-    if (appState.highlightsVisible) {
-      appState.isUserTypingText = false;
-    } else {
-      if (userAlreadyTyped) {
-        appState.isUserTypingText = true;
+    if (event.key === KeyActions.TurnOn) {
+      const secondKeydown = !!firstKeydownTimeout;
+      if (secondKeydown || appState.highlightsVisible) {
+        func(event);
+      } else {
+        firstKeydownTimeout = setTimeout(() => {
+          firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
+        }, 200);
       }
-      userTypingTimeout = setTimeout(() => {
-        userTypingTimeout = clearTimeout(userTypingTimeout);
-        appState.isUserTypingText = false;
-      }, 1000);
-    }
-
-    func(event);
-  };
-}
-
-function filterWhenTypingText(func: (e: KeyboardEvent) => void) {
-  return (event: KeyboardEvent) => {
-    if (!appState.isUserTypingText) {
+    } else {
+      firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
       func(event);
     }
   };
