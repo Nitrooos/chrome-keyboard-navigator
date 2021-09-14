@@ -1,27 +1,17 @@
 {
-  "name": "Getting Started Example",
+  "name": "Keyboard Navigator",
   "version": "1.0",
-  "description": "Build an Extension!",
-  "permissions": ["storage", "activeTab", "scripting"],
-  "options_page": "options.html",
+  "description": "Chrome's extension to navigate pages only with keyboard",
+  "permissions": [],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background-bundle.js"
   },
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["build/main-bundle.js"]
+      "js": ["build/extension-bundle.js"]
     }
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "/images/get_started16.png",
-      "32": "/images/get_started32.png",
-      "48": "/images/get_started48.png",
-      "128": "/images/get_started128.png"
-    }
-  },
   "icons": {
     "16": "/images/get_started16.png",
     "32": "/images/get_started32.png",
