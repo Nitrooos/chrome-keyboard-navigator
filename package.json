@@ -2,7 +2,7 @@
   "name": "keyboard-navigator",
   "version": "1.0.0",
   "description": "Browser extension to make navigation between links easier!",
-  "main": "contentScript.js",
+  "main": "build/extension-bundle.js",
   "scripts": {
     "start": "webpack -w",
     "test": "echo \"Error: no test specified\" && exit 1"
