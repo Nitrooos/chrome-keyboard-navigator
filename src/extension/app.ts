@@ -63,7 +63,7 @@ function filterModifierKeys(func: (e: KeyboardEvent) => void) {
 }
 
 function recognizeTurningOn(func: (e: KeyboardEvent) => void) {
-  let firstKeydownTimeout = null;
+  let firstKeydownTimeout: ReturnType<typeof setTimeout> = null;
 
   return (event: KeyboardEvent) => {
     if (event.key === KeyActions.TurnOn) {
@@ -72,11 +72,13 @@ function recognizeTurningOn(func: (e: KeyboardEvent) => void) {
         func(event);
       } else {
         firstKeydownTimeout = setTimeout(() => {
-          firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
+          clearTimeout(firstKeydownTimeout);
+          firstKeydownTimeout = null
         }, 200);
       }
     } else {
-      firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
+      clearTimeout(firstKeydownTimeout);
+      firstKeydownTimeout = null
       func(event);
     }
   };

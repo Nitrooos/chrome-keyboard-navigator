@@ -47,7 +47,10 @@ function queryClickableAll(domDocument: Document): HTMLElement[] {
   return Array.from(domDocument.querySelectorAll(clickableSelector));
 }
 
-function createHighlightFromClickable(domDocument: Document, { clickable, rect }): Highlight {
+function createHighlightFromClickable(
+  domDocument: Document,
+  { clickable, rect }: Pick<Highlight, 'clickable' | 'rect'>
+): Highlight {
   const element = domDocument.createElement("div");
   Object.assign(element.style, {
     background: "transparent",
