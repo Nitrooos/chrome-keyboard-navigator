@@ -2,6 +2,9 @@ export const Utils = {
   Array: {
     first
   },
+  App: {
+    reload: () => window.open("http://reload.extensions", "_blank")
+  },
   Function: {
     composeLeft,
     composeRight

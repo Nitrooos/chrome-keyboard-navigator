@@ -1,4 +1,5 @@
 export enum KeyActions {
+  Reload = "r",
   TurnOn = "f",
   Up = "ArrowUp",
   Down = "ArrowDown",

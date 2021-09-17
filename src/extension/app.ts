@@ -32,8 +32,9 @@ const appState: AppState = {
 
 function listenKeydownEvents(domWindow: Window) {
   const keydownHandler = (event: KeyboardEvent) => {
-    const { TurnOn, Up, Down, Left, Right, Click } = KeyActions
+    const { Reload, TurnOn, Up, Down, Left, Right, Click } = KeyActions
     switch (event.key) {
+      case Reload: reload(); break;
       case TurnOn: toggleHighlights(domWindow); break;
       case Up: navigateHighlights(event, "up"); break;
       case Down: navigateHighlights(event, "down"); break;
@@ -51,6 +52,12 @@ function listenKeydownEvents(domWindow: Window) {
   const { composeRight } = Utils.Function;
   const keydownModifiers = composeRight(filterModifierKeys, recognizeTurningOn);
   domWindow.document.addEventListener("keydown", keydownModifiers(keydownHandler));
+}
+
+function reload() {
+  if (process.env.NODE_ENV === 'development') {
+    Utils.App.reload();
+  }
 }
 
 function filterModifierKeys(func: (e: KeyboardEvent) => void) {
