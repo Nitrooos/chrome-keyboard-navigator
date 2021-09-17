@@ -4,6 +4,7 @@
   "description": "Browser extension to make navigation between links easier!",
   "main": "build/extension-bundle.js",
   "scripts": {
+    "build": "webpack --mode=production",
     "start": "webpack -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
