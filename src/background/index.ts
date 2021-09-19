@@ -3,3 +3,12 @@
 // found in the LICENSE file.
 
 'use strict';
+
+import { Callback, MessageType } from '../shared/messages'
+
+chrome.runtime.onMessage.addListener((request: MessageType, _: any, sendResponse: Callback) => {
+  if (request === "reloadRequest") {
+    chrome.runtime.reload();
+    sendResponse("reloaded");
+  }
+});
