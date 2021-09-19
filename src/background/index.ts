@@ -6,7 +6,9 @@
 
 import { Callback, MessageType } from '../shared/messages'
 
-chrome.runtime.onMessage.addListener((request: MessageType, _: any, sendResponse: Callback) => {
+type MessageSender = chrome.runtime.MessageSender
+
+chrome.runtime.onMessage.addListener((request: MessageType, _: MessageSender, sendResponse: Callback) => {
   if (request === "reloadRequest") {
     chrome.runtime.reload();
     sendResponse("reloaded");
