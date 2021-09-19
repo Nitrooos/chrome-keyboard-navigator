@@ -4,6 +4,7 @@
   "description": "Browser extension to make navigation between links easier!",
   "main": "build/extension-bundle.js",
   "scripts": {
+    "build": "webpack --mode=production",
     "start": "webpack -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,6 +25,7 @@
   },
   "homepage": "https://github.com/Nitrooos/keyboard-navigator#readme",
   "devDependencies": {
+    "@types/chrome": "^0.0.157",
     "ts-loader": "^9.1.2",
     "typescript": "^4.2.4",
     "webpack": "^5.37.0",

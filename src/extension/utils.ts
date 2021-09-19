@@ -14,7 +14,10 @@ function composeRight(...functions: Function[]): Function {
 }
 
 function composeLeft(...functions: Function[]): Function {
-  return functions.reduce((acc, func) => (...args) => func(acc(...args)), value => value);
+  return functions.reduce(
+    (acc, func) => (...args: any) => func(acc(...args)),
+    (value: any) => value
+  );
 }
 
 function first<T>(array: T[]): T {

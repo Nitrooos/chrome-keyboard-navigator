@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "baseUrl": ".",
+    "module": "es6",
     "lib": ["ES2015", "DOM"],
-    "noImplicitAny": false,
-    "outDir": "build",
+    "noImplicitAny": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },  
     "preserveConstEnums": true,
     "removeComments": true,
-    "rootDir": "src",
     "sourceMap": true,
     "target": "ES6"
-  },
-  "include": ["src/**/*"]
+  }
 }

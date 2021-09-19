@@ -1,8 +1,9 @@
+import { sendMessage } from "@/shared/messages";
+
 import { DomHighlight } from "./domHighlight";
-import { KeyActions } from "./key-actions";
+import { Action, getAction } from "./actions";
 import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
-import { Utils } from "./utils";
 
 export function start(domWindow: Window) {
   listenKeydownEvents(domWindow);
@@ -32,8 +33,10 @@ const appState: AppState = {
 
 function listenKeydownEvents(domWindow: Window) {
   const keydownHandler = (event: KeyboardEvent) => {
-    const { TurnOn, Up, Down, Left, Right, Click } = KeyActions
-    switch (event.key) {
+    const { Reload, TurnOn, Up, Down, Left, Right, Click } = Action
+
+    switch (getAction(event)) {
+      case Reload: reload(event); break;
       case TurnOn: toggleHighlights(domWindow); break;
       case Up: navigateHighlights(event, "up"); break;
       case Down: navigateHighlights(event, "down"); break;
@@ -48,35 +51,33 @@ function listenKeydownEvents(domWindow: Window) {
     }
   };
 
-  const { composeRight } = Utils.Function;
-  const keydownModifiers = composeRight(filterModifierKeys, recognizeTurningOn);
-  domWindow.document.addEventListener("keydown", keydownModifiers(keydownHandler));
+  domWindow.document.addEventListener("keydown", recognizeTurningOn(keydownHandler));
 }
 
-function filterModifierKeys(func: (e: KeyboardEvent) => void) {
-  return (event: KeyboardEvent) => {
-    const modifierKeysPressed = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
-    if (!modifierKeysPressed) {
-      func(event);
-    }
-  };
+function reload(event: KeyboardEvent) {
+  if (process.env.NODE_ENV === 'development') {
+    event.preventDefault();
+    sendMessage("reloadRequest", () => window.location.reload());
+  }
 }
 
 function recognizeTurningOn(func: (e: KeyboardEvent) => void) {
-  let firstKeydownTimeout = null;
+  let firstKeydownTimeout: ReturnType<typeof setTimeout> = null;
 
   return (event: KeyboardEvent) => {
-    if (event.key === KeyActions.TurnOn) {
+    if (getAction(event) === Action.TurnOn) {
       const secondKeydown = !!firstKeydownTimeout;
       if (secondKeydown || appState.highlightsVisible) {
         func(event);
       } else {
         firstKeydownTimeout = setTimeout(() => {
-          firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
+          clearTimeout(firstKeydownTimeout);
+          firstKeydownTimeout = null
         }, 200);
       }
     } else {
-      firstKeydownTimeout = clearTimeout(firstKeydownTimeout);
+      clearTimeout(firstKeydownTimeout);
+      firstKeydownTimeout = null
       func(event);
     }
   };

@@ -29,21 +29,24 @@ function getNearestHighlight(highlights: Highlight[], fromPosition: Point): High
 }
 
 function getNearestDirectionalHighlights(highlights: Highlight[], selectedHighlight: Highlight) {
+  type HighlightDistances = [Highlight, Rectangle, CoverageDistance]
   const highlightsDistances = highlights.map(highlight => [
     highlight,
     highlight.rect,
     getCoverageDistance(selectedHighlight.rect, highlight.rect)
-  ]) as [Highlight, Rectangle, CoverageDistance][];
+  ]) as HighlightDistances[];
 
   const shRect = selectedHighlight.rect;
   const [below, left, right, above] = [
-    ([, rect, _]) => rect.y > shRect.y + shRect.height/2,
-    ([, rect, _]) => rect.x + rect.width/2 < shRect.x,
-    ([, rect, _]) => rect.x > shRect.x + shRect.width/2,
-    ([, rect, _]) => rect.y + rect.height/2 < shRect.y
+    ([, rect]: HighlightDistances) => rect.y > shRect.y + shRect.height/2,
+    ([, rect]: HighlightDistances) => rect.x + rect.width/2 < shRect.x,
+    ([, rect]: HighlightDistances) => rect.x > shRect.x + shRect.width/2,
+    ([, rect]: HighlightDistances) => rect.y + rect.height/2 < shRect.y
   ];
-  const horizontalDistanceAsc = ([, , c1], [, , c2]) => c1.horizontal - c2.horizontal;
-  const verticalDistanceAsc = ([, , c1], [, , c2]) => c1.vertical - c2.vertical;
+  const horizontalDistanceAsc = 
+    ([, , c1]: HighlightDistances, [, , c2]: HighlightDistances) => c1.horizontal - c2.horizontal;
+  const verticalDistanceAsc = 
+    ([, , c1]: HighlightDistances, [, , c2]: HighlightDistances) => c1.vertical - c2.vertical;
   const [downNearest, leftNearest, rightNearest, upNearest] = [
     highlightsDistances.filter(below).sort(verticalDistanceAsc),
     highlightsDistances.filter(left).sort(horizontalDistanceAsc),
