@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "es6",
     "lib": ["ES2015", "DOM"],
     "noImplicitAny": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },  
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,

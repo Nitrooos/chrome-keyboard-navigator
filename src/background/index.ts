@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Callback, MessageType } from '../shared/messages'
+import { Callback, MessageType } from '@/shared/messages'
 
 type MessageSender = chrome.runtime.MessageSender
 

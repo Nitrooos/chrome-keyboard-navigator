@@ -1,6 +1,7 @@
+import { sendMessage } from "@/shared/messages";
+
 import { DomHighlight } from "./domHighlight";
 import { Action, getAction } from "./actions";
-import { sendMessage } from "../shared/messages";
 import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
 
