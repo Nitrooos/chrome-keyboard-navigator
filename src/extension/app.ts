@@ -1,7 +1,8 @@
 import { sendMessage } from "@/shared/messages";
 
-import { DomHighlight } from "./domHighlight";
 import { Action, getAction } from "./actions";
+import { DomHighlight } from "./domHighlight";
+import { Link, Click } from "./html";
 import { Highlight, Point } from "./models";
 import { Navigator } from "./navigation";
 
@@ -20,8 +21,6 @@ type AppState = {
 
 type Direction = "up" | "down" | "left" | "right";
 
-type ClickSimulatingMethod = "click" | "focus";
-
 const appState: AppState = {
   focusedElement: null,
   highlights: [],
@@ -33,7 +32,7 @@ const appState: AppState = {
 
 function listenKeydownEvents(domWindow: Window) {
   const keydownHandler = (event: KeyboardEvent) => {
-    const { Reload, TurnOn, Up, Down, Left, Right, Click } = Action
+    const { Reload, TurnOn, Up, Down, Left, Right, Click, OpenInNewTab, Nothing } = Action
 
     switch (getAction(event)) {
       case Reload: reload(event); break;
@@ -43,6 +42,8 @@ function listenKeydownEvents(domWindow: Window) {
       case Left: navigateHighlights(event, "left"); break;
       case Right: navigateHighlights(event, "right"); break;
       case Click: simulateClick(event); break;
+      case OpenInNewTab: simulateShiftClick(event); break;
+      case Nothing: break;
       default: {
         hideHighlights();
         blurFocusedElement();
@@ -57,7 +58,7 @@ function listenKeydownEvents(domWindow: Window) {
 function reload(event: KeyboardEvent) {
   if (process.env.NODE_ENV === 'development') {
     event.preventDefault();
-    sendMessage("reloadRequest", () => window.location.reload());
+    sendMessage({ type: "reloadRequest" }, () => window.location.reload());
   }
 }
 
@@ -128,7 +129,7 @@ function simulateClick(event: Event) {
   const element = appState.selectedHighlight?.clickable;
   if (element) {
     event.preventDefault();
-    const clickSimulatingMethod = getClickSimulatingMethodForElement(element);
+    const clickSimulatingMethod = Click.getSimulatingMethod(element);
     element[clickSimulatingMethod]();
     if (clickSimulatingMethod === "focus") {
       appState.focusedElement = element;
@@ -138,15 +139,13 @@ function simulateClick(event: Event) {
   }
 }
 
-function getClickSimulatingMethodForElement(element: HTMLElement): ClickSimulatingMethod {
-  const tagsNeedingFocus = ["input", "select", "textarea"];
-  const tagsNeedingFocusSelector = tagsNeedingFocus.join(",");
-
-  const inputTypesNeedingClick = ["button", "checkbox", "file", "image", "radio", "reset", "submit"];
-  const inputNeedingClickSelector = inputTypesNeedingClick.map(type => `input[type="${type}"]`).join(",");
-
-  const shouldBeFocused = element.matches(tagsNeedingFocusSelector) && !element.matches(inputNeedingClickSelector);
-  return shouldBeFocused ? "focus" : "click";
+function simulateShiftClick(event: Event) {
+  const element = appState.selectedHighlight?.clickable;
+  if (element && Link.isLink(element)) {
+    event.preventDefault();
+    const href = element.getAttribute('href');
+    sendMessage({ type: "openTabRequest", payload: Link.getFullUrl(href) });
+  }
 }
 
 function blurFocusedElement() {

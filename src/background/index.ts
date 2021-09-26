@@ -4,13 +4,21 @@
 
 'use strict';
 
-import { Callback, MessageType } from '@/shared/messages'
+import { Callback, Message } from '@/shared/messages'
+
+import { openInRightNextTab } from './tabs'
 
 type MessageSender = chrome.runtime.MessageSender
 
-chrome.runtime.onMessage.addListener((request: MessageType, _: MessageSender, sendResponse: Callback) => {
-  if (request === "reloadRequest") {
+chrome.runtime.onMessage.addListener(async (request: Message, _: MessageSender, sendResponse: Callback) => {
+  if (request.type === "reloadRequest") {
     chrome.runtime.reload();
     sendResponse("reloaded");
+  } else if (request.type === "openTabRequest" && request.payload) {
+    openInRightNextTab(
+      request.payload,
+      () => sendResponse(`new tab opened with ${request.payload}`),
+      { active: false }
+    );
   }
 });
