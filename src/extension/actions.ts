@@ -5,12 +5,19 @@ enum Action {
   Down,
   Left,
   Right,
-  Click
+  Click,
+  OpenInNewTab,
+  Nothing
 }
 
 function getAction(event: KeyboardEvent): Action {
   if (event.ctrlKey && event.shiftKey && event.key === 'R') {
     return Action.Reload;
+  }
+
+  if (event.ctrlKey) {
+    if (event.key === 'Enter') return Action.OpenInNewTab;
+    else return Action.Nothing;
   }
 
   const modifierKeysPressed = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;

@@ -3,6 +3,7 @@
     "baseUrl": ".",
     "module": "es6",
     "lib": ["ES2015", "DOM"],
+    "moduleResolution": "node",
     "noImplicitAny": true,
     "paths": {
       "@/*": ["./src/*"]
